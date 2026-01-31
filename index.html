@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>电费分配助手</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        /* 基础重置 */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 顶部对齐，防止键盘弹出时遮挡 */
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 22px;
+        }
+
+        .input-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input {
+            width: 100%;
+            /* 关键：16px 字体防止 iOS 自动放大屏幕 */
+            font-size: 16px; 
+            padding: 14px 12px;
+            border: 1.5px solid #eee;
+            border-radius: 12px;
+            background: #fafafa;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .unit {
+            position: absolute;
+            right: 15px;
+            color: #bbb;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        .section-title {
+            margin: 24px 0 12px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #444;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #eee;
+            margin-left: 10px;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
+        }
+
+        /* 手机端点击态 */
+        button:active {
+            transform: scale(0.97);
+            filter: brightness(0.9);
+        }
+
+        .result {
+            margin-top: 24px;
+            display: none;
+            background: #f8fbff;
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid #e1e9f5;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .result-item:last-child { border-bottom: none; }
+
+        .res-label { color: #666; font-size: 15px; }
+        .res-val { font-weight: 700; color: #333; }
+        .highlight { color: #d35400; font-size: 17px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⚡ 电费分配助手</h2>
+
+    <div class="input-group">
+        <label>本月总账单</label>
+        <div class="input-wrapper">
+            <input type="number" id="totalBill" inputmode="decimal" placeholder="0.00" onclick="this.select()">
+            <span class="unit">RM</span>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>合租总人数</label>
+        <div class="input-wrapper">
+            <input type="number" id="people" inputmode="numeric" placeholder="人" onclick="this.select()">
+            <span class="unit">人</span>
+        </div>
+    </div>
+
+    <div class="section-title">❄️ 冷气分配比例</div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+        <div class="input-group">
+            <label>房 A</label>
+            <div class="input-wrapper">
+                <input type="number" id="roomA" value="33.3" inputmode="decimal" onclick="this.select()">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>房 B</label>
+            <div class="input-wrapper">
+                <input type="number" id="roomB" value="33.3" inputmode="decimal" onclick="this.select()">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>房 C</label>
+            <div class="input-wrapper">
+                <input type="number" id="roomC" value="33.4" inputmode="decimal" onclick="this.select()">
+            </div>
+        </div>
+    </div>
+
+    <button onclick="calculate()">立即计算</button>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+    // 自动回填
+    window.onload = () => {
+        ['people', 'roomA', 'roomB', 'roomC'].forEach(id => {
+            const val = localStorage.getItem(id);
+            if (val) document.getElementById(id).value = val;
+        });
+    };
+
+    function calculate() {
+        const totalBill = Number(document.getElementById('totalBill').value);
+        const people = Number(document.getElementById('people').value);
+        const rA = Number(document.getElementById('roomA').value);
+        const rB = Number(document.getElementById('roomB').value);
+        const rC = Number(document.getElementById('roomC').value);
+
+        if (!totalBill || !people) {
+            alert('❌ 请输入金额和人数');
+            return;
+        }
+
+        if (Math.abs((rA + rB + rC) - 100) > 0.1) {
+            alert('⚠️ 比例总和必须为 100%');
+            return;
+        }
+
+        // 保存设置
+        localStorage.setItem('people', people);
+        localStorage.setItem('roomA', rA);
+        localStorage.setItem('roomB', rB);
+        localStorage.setItem('roomC', rC);
+
+        const airconTotal = totalBill * 0.5;
+        const publicTotal = totalBill * 0.5;
+        const pubPer = publicTotal / people;
+
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <div class="result-item">
+                <span class="res-label">公共 (每人):</span>
+                <span class="res-val">RM ${pubPer.toFixed(2)}</span>
+            </div>
+            <div class="result-item">
+                <span class="res-label">房间 A:</span>
+                <span class="res-val highlight">RM ${(pubPer + airconTotal * (rA/100)).toFixed(2)}</span>
+            </div>
+            <div class="result-item">
+                <span class="res-label">房间 B:</span>
+                <span class="res-val highlight">RM ${(pubPer + airconTotal * (rB/100)).toFixed(2)}</span>
+            </div>
+            <div class="result-item">
+                <span class="res-label">房间 C:</span>
+                <span class="res-val highlight">RM ${(pubPer + airconTotal * (rC/100)).toFixed(2)}</span>
+            </div>
+        `;
+        
+        // 计算完后滚动到底部，防止手机屏幕太小看不到结果
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>
